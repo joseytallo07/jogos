@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz da Primeira Eucaristia - Versão 2</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Trebuchet MS", sans-serif;
+    }
+
+    body {
+      background: linear-gradient(180deg, #0a0f1f, #182848, #2b4f8c);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .game-container {
+      width: 100%;
+      max-width: 980px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 4px solid #ffd700;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stars {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.15;
+      background-image:
+        radial-gradient(circle at 20% 30%, white 1px, transparent 1px),
+        radial-gradient(circle at 80% 20%, white 1px, transparent 1px),
+        radial-gradient(circle at 70% 70%, white 1px, transparent 1px),
+        radial-gradient(circle at 40% 80%, white 1px, transparent 1px),
+        radial-gradient(circle at 10% 60%, white 1px, transparent 1px);
+      background-size: 180px 180px;
+    }
+
+    .screen {
+      display: none;
+      position: relative;
+      z-index: 2;
+      animation: fadeIn 0.35s ease;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .title {
+      text-align: center;
+      color: #ffd700;
+      font-size: 2.3rem;
+      text-shadow: 2px 2px 0 #000;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #d8e7ff;
+      margin-bottom: 22px;
+      font-size: 1rem;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.08);
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .menu-buttons,
+    .difficulty-buttons,
+    .end-buttons {
+      display: grid;
+      gap: 14px;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 14px 18px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1rem;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .btn-gold {
+      background: linear-gradient(180deg, #ffd700, #ffb700);
+      color: #222;
+      box-shadow: 0 5px 0 #b07d00;
+    }
+
+    .btn-blue {
+      background: linear-gradient(180deg, #4fc3f7, #0288d1);
+      color: #fff;
+      box-shadow: 0 5px 0 #015c8c;
+    }
+
+    .btn-green {
+      background: linear-gradient(180deg, #66bb6a, #2e7d32);
+      color: #fff;
+      box-shadow: 0 5px 0 #1b5e20;
+    }
+
+    .btn-red {
+      background: linear-gradient(180deg, #ef5350, #c62828);
+      color: #fff;
+      box-shadow: 0 5px 0 #8e0000;
+    }
+
+    .btn-purple {
+      background: linear-gradient(180deg, #ba68c8, #7b1fa2);
+      color: #fff;
+      box-shadow: 0 5px 0 #4a0072;
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .hud-box {
+      background: rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 12px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .question-box {
+      background: rgba(255,255,255,0.08);
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      padding: 24px;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .question-text {
+      font-size: 1.4rem;
+      line-height: 1.5;
+    }
+
+    .answers {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .answer-btn {
+      background: linear-gradient(180deg, #4fc3f7, #0288d1);
+      color: #fff;
+      box-shadow: 0 5px 0 #015c8c;
+      min-height: 70px;
+    }
+
+    .answer-btn.correct {
+      background: linear-gradient(180deg, #66bb6a, #2e7d32);
+      box-shadow: 0 5px 0 #1b5e20;
+    }
+
+    .answer-btn.wrong {
+      background: linear-gradient(180deg, #ef5350, #c62828);
+      box-shadow: 0 5px 0 #8e0000;
+    }
+
+    .feedback {
+      min-height: 36px;
+      margin-top: 18px;
+      text-align: center;
+      font-size: 1.08rem;
+      font-weight: bold;
+      line-height: 1.5;
+    }
+
+    .progress-bar {
+      margin-top: 18px;
+      width: 100%;
+      height: 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00e676, #ffd600);
+      transition: width 0.4s ease;
+    }
+
+    .popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      padding: 20px;
+    }
+
+    .popup-overlay.active {
+      display: flex;
+    }
+
+    .popup {
+      width: 100%;
+      max-width: 560px;
+      background: linear-gradient(180deg, #1b2450, #101936);
+      border: 4px solid #ffd700;
+      border-radius: 22px;
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 0 30px rgba(255,215,0,0.3);
+      animation: popupIn 0.25s ease;
+    }
+
+    @keyframes popupIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .popup h2 {
+      color: #ffd700;
+      margin-bottom: 12px;
+      font-size: 1.8rem;
+    }
+
+    .popup p {
+      line-height: 1.6;
+      font-size: 1.08rem;
+      margin-bottom: 16px;
+    }
+
+    .reward-badge {
+      background: rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+
+    .small-note {
+      margin-top: 12px;
+      color: #c7dbff;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    .result-box {
+      text-align: center;
+    }
+
+    .result-box h2 {
+      color: #ffd700;
+      font-size: 2rem;
+      margin-bottom: 14px;
+    }
+
+    .result-box p {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .tips-list {
+      text-align: left;
+      line-height: 1.7;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .title {
+        font-size: 1.8rem;
+      }
+
+      .hud {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .answers {
+        grid-template-columns: 1fr;
+      }
+
+      .question-text {
+        font-size: 1.18rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="stars"></div>
+
+    <!-- TELA INICIAL -->
+    <div class="screen active" id="startScreen">
+      <h1 class="title">🎮 Quiz da Primeira Eucaristia</h1>
+      <p class="subtitle">Versão 2 • Com perguntas aleatórias, prendas e eventos surpresa!</p>
+
+      <div class="card">
+        <h3 style="margin-bottom:10px; color:#ffd700;">📖 Como jogar</h3>
+        <div class="tips-list">
+          <p>⭐ Escolha um nível de dificuldade</p>
+          <p>❤️ Você começa com 3 vidas</p>
+          <p>🎲 Cada partida tem perguntas aleatórias</p>
+          <p>🎁 Se errar, aparece uma prenda</p>
+          <p>⚡ Pode surgir um evento surpresa</p>
+          <p>🏆 Complete o desafio e vença!</p>
+        </div>
+      </div>
+
+      <div class="menu-buttons">
+        <button class="btn-gold" onclick="showDifficultyScreen()">▶️ Iniciar Jogo</button>
+      </div>
+    </div>
+
+    <!-- TELA DE DIFICULDADE -->
+    <div class="screen" id="difficultyScreen">
+      <h1 class="title">🕹️ Escolha o Nível</h1>
+      <p class="subtitle">Cada nível tem mais pontos e desafios diferentes</p>
+
+      <div class="difficulty-buttons">
+        <button class="btn-green" onclick="startGame('facil')">🟢 Fácil — Iniciante da Fé</button>
+        <button class="btn-gold" onclick="startGame('medio')">🟡 Médio — Pequeno Discípulo</button>
+        <button class="btn-red" onclick="startGame('dificil')">🔴 Difícil — Guardião da Palavra</button>
+      </div>
+
+      <div class="menu-buttons" style="margin-top:18px;">
+        <button class="btn-blue" onclick="showStartScreen()">⬅️ Voltar</button>
+      </div>
+    </div>
+
+    <!-- TELA DO JOGO -->
+    <div class="screen" id="gameScreen">
+      <div class="hud">
+        <div class="hud-box">⭐ Pontos<br><span id="score">0</span></div>
+        <div class="hud-box">❤️ Vidas<br><span id="lives">3</span></div>
+        <div class="hud-box">📜 Pergunta<br><span id="questionNumber">1/5</span></div>
+        <div class="hud-box">🎯 Nível<br><span id="levelBadge">Fácil</span></div>
+      </div>
+
+      <div class="question-box">
+        <div class="question-text" id="questionText">Carregando pergunta...</div>
+      </div>
+
+      <div class="answers" id="answersContainer"></div>
+
+      <div class="feedback" id="feedback"></div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <p class="small-note">💡 Dica: acerte para ganhar pontos. Se errar... talvez venha uma prenda 👀</p>
+    </div>
+
+    <!-- TELA FINAL -->
+    <div class="screen" id="endScreen">
+      <div class="result-box">
+        <h2 id="endTitle">🏆 Fim de Jogo!</h2>
+        <p id="finalScore">Sua pontuação: 0</p>
+        <p id="finalMessage">Mensagem final</p>
+
+        <div class="card reward-badge" id="rewardBox">
+          Recompensa final
+        </div>
+
+        <div class="end-buttons" style="margin-top:18px;">
+          <button class="btn-gold" onclick="showDifficultyScreen()">🔁 Jogar Novamente</button>
+          <button class="btn-blue" onclick="showStartScreen()">🏠 Menu Inicial</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP DE PRENDA / EVENTO -->
+  <div class="popup-overlay" id="popupOverlay">
+    <div class="popup">
+      <h2 id="popupTitle">🎁 Evento</h2>
+      <p id="popupMessage">Mensagem do evento</p>
+      <button class="btn-gold" id="popupButton" onclick="closePopupAndContinue()">Continuar</button>
+    </div>
+  </div>
+
+  <script>
+    // =========================
+    // BANCO DE PERGUNTAS
+    // =========================
+    const questions = {
+      facil: [
+        {
+          question: "Quem é o Filho de Deus que veio nos salvar?",
+          answers: ["Moisés", "Jesus", "Abraão", "Davi"],
+          correct: 1
+        },
+        {
+          question: "Qual é o livro sagrado dos cristãos?",
+          answers: ["Catecismo", "Missal", "Bíblia", "Hinário"],
+          correct: 2
+        },
+        {
+          question: "Quem foi a mãe de Jesus?",
+          answers: ["Maria", "Marta", "Isabel", "Ana"],
+          correct: 0
+        },
+        {
+          question: "Onde Jesus nasceu?",
+          answers: ["Jerusalém", "Belém", "Nazaré", "Roma"],
+          correct: 1
+        },
+        {
+          question: "Na Primeira Eucaristia recebemos quem?",
+          answers: ["Somente pão", "Somente símbolo", "O Corpo de Cristo", "Uma bênção comum"],
+          correct: 2
+        },
+        {
+          question: "Qual oração Jesus nos ensinou?",
+          answers: ["Ave Maria", "Glória", "Pai Nosso", "Salve Rainha"],
+          correct: 2
+        },
+        {
+          question: "Quem cuidou de Jesus junto com Maria?",
+          answers: ["Pedro", "José", "João", "André"],
+          correct: 1
+        },
+        {
+          question: "Qual é o sinal que fazemos ao começar a oração?",
+          answers: ["Bater palmas", "Sinal da Cruz", "Abaixar a cabeça", "Acender vela"],
+          correct: 1
+        }
+      ],
+      medio: [
+        {
+          question: "Quantos discípulos Jesus escolheu de modo especial?",
+          answers: ["7", "10", "12", "14"],
+          correct: 2
+        },
+        {
+          question: "Em qual sacramento entramos na família de Deus?",
+          answers: ["Eucaristia", "Batismo", "Crismas", "Confissão"],
+          correct: 1
+        },
+        {
+          question: "O que aconteceu na Última Ceia?",
+          answers: ["Jesus multiplicou pães", "Jesus instituiu a Eucaristia", "Jesus acalmou a tempestade", "Jesus subiu ao céu"],
+          correct: 1
+        },
+        {
+          question: "Qual é o dia em que os católicos celebram a Ressurreição de Jesus?",
+          answers: ["Natal", "Páscoa", "Pentecostes", "Corpus Christi"],
+          correct: 1
+        },
+        {
+          question: "Quem batizou Jesus no rio Jordão?",
+          answers: ["Pedro", "João Batista", "Paulo", "José"],
+          correct: 1
+        },
+        {
+          question: "Antes de comungar, qual sacramento nos ajuda quando cometemos pecados?",
+          answers: ["Confissão", "Matrimônio", "Ordem", "Unção"],
+          correct: 0
+        },
+        {
+          question: "Qual santo apóstolo é considerado o primeiro Papa?",
+          answers: ["João", "Pedro", "Tiago", "Tomé"],
+          correct: 1
+        },
+        {
+          question: "Qual milagre Jesus fez com pães e peixes?",
+          answers: ["Transformou em vinho", "Multiplicou para a multidão", "Escondeu no deserto", "Deu aos apóstolos no barco"],
+          correct: 1
+        }
+      ],
+      dificil: [
+        {
+          question: "Em João 6, Jesus se apresenta como:",
+          answers: ["Luz do mundo", "Bom Pastor", "Pão da Vida", "Videira verdadeira"],
+          correct: 2
+        },
+        {
+          question: "Qual milagre é visto como sinal que prepara a compreensão da Eucaristia?",
+          answers: ["Transformação da água em vinho", "Multiplicação dos pães", "Cura do cego", "Pesca milagrosa"],
+          correct: 1
+        },
+        {
+          question: "Qual discípulo negou Jesus três vezes antes de se arrepender?",
+          answers: ["João", "Pedro", "Tomé", "Tiago"],
+          correct: 1
+        },
+        {
+          question: "Na Santa Missa, o pão e o vinho se tornam:",
+          answers: ["Apenas um símbolo", "Uma lembrança simples", "O Corpo e Sangue de Cristo", "Um sinal sem presença real"],
+          correct: 2
+        },
+        {
+          question: "Qual mandamento fala sobre amar a Deus sobre todas as coisas?",
+          answers: ["1º Mandamento", "3º Mandamento", "5º Mandamento", "10º Mandamento"],
+          correct: 0
+        },
+        {
+          question: "Quem reconheceu Jesus ao partir o pão no caminho de Emaús?",
+          answers: ["Os discípulos de Emaús", "Os fariseus", "Os soldados", "Os publicanos"],
+          correct: 0
+        },
+        {
+          question: "Qual evangelista é tradicionalmente associado ao símbolo do leão?",
+          answers: ["Mateus", "Marcos", "Lucas", "João"],
+          correct: 1
+        },
+        {
+          question: "Na oração do Pai-Nosso, pedimos o pão de cada dia. Para os cristãos, isso também recorda:",
+          answers: ["Apenas comida comum", "A Eucaristia", "Somente jejum", "A pesca milagrosa"],
+          correct: 1
+        }
+      ]
+    };
+
+    // =========================
+    // PRENDAS
+    // =========================
+    const prendas = [
+      "🙏 Reze 1 Ave-Maria.",
+      "✝️ Faça o Sinal da Cruz corretamente.",
+      "📖 Diga o nome de 3 santos.",
+      "🎵 Cante um pedacinho de um canto da igreja.",
+      "🐟 Imite o milagre da multiplicação dos pães e peixes.",
+      "⛪ Diga em 1 frase o que é a Eucaristia.",
+      "👼 Fale o nome de 2 santos ou anjos.",
+      "🕊️ Reze 1 Pai-Nosso.",
+      "📜 Diga 1 mandamento de Deus.",
+      "😂 Imite Noé chamando os animais para a arca.",
+      "🚶 Faça uma mini caminhada como se estivesse indo à Missa.",
+      "📣 Fale bem alto: 'Jesus, eu confio em Vós!'"
+    ];
+
+    // =========================
+    // EVENTOS SURPRESA
+    // =========================
+    const bonusEvents = [
+      { type: "points", title: "⭐ Bônus Celestial!", message: "Você ganhou +10 pontos extras por sua atenção!", points: 10 },
+      { type: "points", title: "✨ Estrela da Sabedoria!", message: "Parabéns! Você ganhou +15 pontos extras!", points: 15 },
+      { type: "life", title: "❤️ Benção Especial!", message: "Você ganhou +1 vida extra!", lives: 1 }
+    ];
+
+    const challengeEvents = [
+      { title: "⚡ Desafio Relâmpago!", message: "Diga o nome de 2 apóstolos antes de continuar!" },
+      { title: "🎵 Missão de Louvor!", message: "Cante um pedacinho de um canto católico!" },
+      { title: "📖 Missão Bíblica!", message: "Fale um milagre de Jesus!" },
+      { title: "🙏 Missão de Oração!", message: "Reze 1 Glória ao Pai!" }
+    ];
+
+    // =========================
+    // ESTADO DO JOGO
+    // =========================
+    let currentLevel = "";
+    let currentQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let lives = 3;
+    let answered = false;
+    let pendingNextStep = null;
+    const QUESTIONS_PER_ROUND = 5;
+
+    // =========================
+    // TELAS
+    // =========================
+    function showScreen(screenId) {
+      document.querySelectorAll(".screen").forEach(screen => screen.classList.remove("active"));
+      document.getElementById(screenId).classList.add("active");
+    }
+
+    function showStartScreen() {
+      showScreen("startScreen");
+    }
+
+    function showDifficultyScreen() {
+      showScreen("difficultyScreen");
+    }
+
+    // =========================
+    // INÍCIO DO JOGO
+    // =========================
+    function startGame(level) {
+      currentLevel = level;
+
+      const shuffled = [...questions[level]];
+      shuffleArray(shuffled);
+
+      currentQuestions = shuffled.slice(0, QUESTIONS_PER_ROUND);
+
+      currentQuestionIndex = 0;
+      score = 0;
+      lives = 3;
+      answered = false;
+      pendingNextStep = null;
+
+      document.getElementById("score").textContent = score;
+      document.getElementById("lives").textContent = lives;
+      document.getElementById("levelBadge").textContent = getLevelName(level);
+
+      showScreen("gameScreen");
+      loadQuestion();
+    }
+
+    function getLevelName(level) {
+      if (level === "facil") return "🟢 Fácil";
+      if (level === "medio") return "🟡 Médio";
+      return "🔴 Difícil";
+    }
+
+    // =========================
+    // CARREGAR PERGUNTA
+    // =========================
+    function loadQuestion() {
+      answered = false;
+      pendingNextStep = null;
+
+      const question = currentQuestions[currentQuestionIndex];
+      document.getElementById("questionText").textContent = question.question;
+      document.getElementById("questionNumber").textContent = `${currentQuestionIndex + 1}/${currentQuestions.length}`;
+      document.getElementById("feedback").textContent = "";
+
+      const answersContainer = document.getElementById("answersContainer");
+      answersContainer.innerHTML = "";
+
+      question.answers.forEach((answer, index) => {
+        const button = document.createElement("button");
+        button.className = "answer-btn";
+        button.textContent = answer;
+        button.onclick = () => selectAnswer(index, button);
+        answersContainer.appendChild(button);
+      });
+
+      updateProgress();
+    }
+
+    // =========================
+    // SELECIONAR RESPOSTA
+    // =========================
+    function selectAnswer(selectedIndex, selectedButton) {
+      if (answered) return;
+      answered = true;
+
+      const question = currentQuestions[currentQuestionIndex];
+      const buttons = document.querySelectorAll(".answer-btn");
+
+      buttons.forEach((btn, index) => {
+        btn.disabled = true;
+        if (index === question.correct) {
+          btn.classList.add("correct");
+        }
+      });
+
+      if (selectedIndex === question.correct) {
+        let points = 10;
+        if (currentLevel === "medio") points = 15;
+        if (currentLevel === "dificil") points = 20;
+
+        score += points;
+        document.getElementById("score").textContent = score;
+
+        selectedButton.classList.add("correct");
+        document.getElementById("feedback").textContent = "✅ Muito bem! Resposta correta!";
+        document.getElementById("feedback").style.color = "#7CFF8A";
+
+        // 30% de chance de evento surpresa ao acertar
+        if (Math.random() < 0.30) {
+          setTimeout(() => {
+            triggerRandomSuccessEvent();
+          }, 900);
+        } else {
+          setTimeout(() => {
+            goToNextStep();
+          }, 1400);
+        }
+
+      } else {
+        lives--;
+        document.getElementById("lives").textContent = lives;
+
+        selectedButton.classList.add("wrong");
+        document.getElementById("feedback").innerHTML = "❌ Ops! Resposta errada... uma prenda apareceu!";
+        document.getElementById("feedback").style.color = "#FF8A8A";
+
+        setTimeout(() => {
+          triggerPrenda();
+        }, 900);
+      }
+    }
+
+    // =========================
+    // PRÓXIMO PASSO
+    // =========================
+    function goToNextStep() {
+      if (lives <= 0) {
+        endGame(false);
+        return;
+      }
+
+      currentQuestionIndex++;
+
+      if (currentQuestionIndex >= currentQuestions.length) {
+        endGame(true);
+      } else {
+        loadQuestion();
+      }
+    }
+
+    // =========================
+    // PRENDA
+    // =========================
+    function triggerPrenda() {
+      const prenda = getRandomItem(prendas);
+
+      let extraText = "";
+      if (lives <= 0) {
+        extraText = "<br><br><strong>💙 Esta foi sua última vida!</strong>";
+      }
+
+      showPopup(
+        "🎁 Prenda!",
+        `Você errou a resposta.<br><br><strong>${prenda}</strong>${extraText}`,
+        () => {
+          goToNextStep();
+        }
+      );
+    }
+
+    // =========================
+    // EVENTOS SURPRESA AO ACERTAR
+    // =========================
+    function triggerRandomSuccessEvent() {
+      const isBonus = Math.random() < 0.7; // 70% bônus, 30% desafio
+
+      if (isBonus) {
+        const event = getRandomItem(bonusEvents);
+
+        if (event.type === "points") {
+          score += event.points;
+          document.getElementById("score").textContent = score;
+
+          showPopup(
+            event.title,
+            `${event.message}<br><br><strong>+${event.points} pontos!</strong>`,
+            () => {
+              goToNextStep();
+            }
+          );
+        } else if (event.type === "life") {
+          lives += event.lives;
+          document.getElementById("lives").textContent = lives;
+
+          showPopup(
+            event.title,
+            `${event.message}<br><br><strong>+${event.lives} vida!</strong>`,
+            () => {
+              goToNextStep();
+            }
+          );
+        }
+
+      } else {
+        const challenge = getRandomItem(challengeEvents);
+
+        showPopup(
+          challenge.title,
+          `${challenge.message}<br><br><strong>Faça o desafio e depois clique em continuar!</strong>`,
+          () => {
+            goToNextStep();
+          }
+        );
+      }
+    }
+
+    // =========================
+    // POPUP
+    // =========================
+    function showPopup(title, message, callback) {
+      document.getElementById("popupTitle").innerHTML = title;
+      document.getElementById("popupMessage").innerHTML = message;
+      document.getElementById("popupOverlay").classList.add("active");
+      pendingNextStep = callback;
+    }
+
+    function closePopupAndContinue() {
+      document.getElementById("popupOverlay").classList.remove("active");
+
+      if (typeof pendingNextStep === "function") {
+        const action = pendingNextStep;
+        pendingNextStep = null;
+        action();
+      }
+    }
+
+    // =========================
+    // BARRA DE PROGRESSO
+    // =========================
+    function updateProgress() {
+      const progress = (currentQuestionIndex / currentQuestions.length) * 100;
+      document.getElementById("progressFill").style.width = progress + "%";
+    }
+
+    // =========================
+    // FIM DE JOGO
+    // =========================
+    function endGame(completed) {
+      showScreen("endScreen");
+      document.getElementById("progressFill").style.width = "100%";
+      document.getElementById("finalScore").textContent = `⭐ Sua pontuação final: ${score}`;
+
+      let title = "";
+      let message = "";
+      let reward = "";
+
+      if (!completed) {
+        title = "💙 Continue Aprendendo!";
+        message = "Você perdeu todas as vidas, mas Deus sempre nos chama a continuar aprendendo e crescendo na fé!";
+        reward = "📖 Dica: revise as histórias de Jesus, os sacramentos e a Santa Missa para tentar novamente.";
+      } else {
+        if (score >= 120) {
+          title = "🏆 Campeão da Eucaristia!";
+          message = "Parabéns! Você foi incrível e mostrou que conhece muito da fé!";
+          reward = "👑 Recompensa: Você ganhou a medalha de Guardião da Palavra!";
+        } else if (score >= 90) {
+          title = "🌟 Pequeno Discípulo Vitorioso!";
+          message = "Muito bem! Você está crescendo no conhecimento de Jesus!";
+          reward = "✨ Recompensa: Você ganhou a Estrela da Sabedoria!";
+        } else {
+          title = "🙏 Missão Cumprida!";
+          message = "Você terminou o desafio! Continue firme na caminhada com Jesus!";
+          reward = "💛 Recompensa: Você ganhou o Coração do Discípulo!";
+        }
+      }
+
+      document.getElementById("endTitle").textContent = title;
+      document.getElementById("finalMessage").textContent = message;
+      document.getElementById("rewardBox").innerHTML = `<strong>${reward}</strong>`;
+    }
+
+    // =========================
+    // UTILITÁRIOS
+    // =========================
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function getRandomItem(array) {
+      return array[Math.floor(Math.random() * array.length)];
+    }
+  </script>
+</body>
+</html>
